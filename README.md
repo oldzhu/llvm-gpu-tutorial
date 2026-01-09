@@ -17,9 +17,17 @@ This repo documents practical WSL2 workflows to *build and debug LLVM GPU backen
   - `llc`, `opt`, `FileCheck`, `llvm-lit`, `mlir-opt`
   - (often useful) `clang`, `mlir-translate`, `llvm-dis`, `llvm-as`, `llvm-link`
 
+## What you get (NVIDIA build)
+- A separate out-of-tree LLVM build with:
+  - Targets: `NVPTX;X86`
+  - Projects: `clang;mlir`
+- Tooling available under `~/build/llvm-nvptx-wsl2/bin/`:
+  - `clang`, `clang++`, `llc`, `llvm-readobj` (plus any lit helpers you build)
+
 ## Extra walkthroughs
 
 - AMDGPU end-to-end compilation flow: `amdgpu/frontend-to-amdgpu.md`
+- NVIDIA end-to-end compilation flow: `nvidia/frontend-to-nvidia.md`
 
 ## Versions (this machine)
 - OS: Ubuntu 24.04.3 LTS (WSL2)
@@ -31,7 +39,8 @@ This repo documents practical WSL2 workflows to *build and debug LLVM GPU backen
 
 ## Repo location assumptions
 - LLVM monorepo checkout: `~/llvm-project`
-- Build dir (out-of-tree): `~/build/llvm-amdgpu-wsl2`
+- AMDGPU build dir (out-of-tree): `~/build/llvm-amdgpu-wsl2`
+- NVIDIA build dir (out-of-tree): `~/build/llvm-nvptx-wsl2`
 
 Adjust paths if yours differ.
 
@@ -91,6 +100,39 @@ grep -E '^(CMAKE_BUILD_TYPE:|LLVM_ENABLE_PROJECTS:|LLVM_TARGETS_TO_BUILD:|LLVM_E
 
 ---
 
+## 2b) Configure a NVIDIA/NVPTX-focused out-of-tree build
+
+This creates a *separate* build directory so your AMDGPU build stays intact.
+
+Create the build directory:
+
+```bash
+mkdir -p ~/build/llvm-nvptx-wsl2
+```
+
+Configure with CMake + Ninja:
+
+```bash
+cmake -S ~/llvm-project/llvm -B ~/build/llvm-nvptx-wsl2 -G Ninja \
+  -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+  -DLLVM_ENABLE_ASSERTIONS=ON \
+  -DLLVM_ENABLE_PROJECTS="clang;mlir" \
+  -DLLVM_TARGETS_TO_BUILD="NVPTX;X86" \
+  -DLLVM_ENABLE_RTTI=OFF \
+  -DLLVM_ENABLE_EH=OFF
+```
+
+Notes:
+- `NVPTX` is the LLVM backend that emits PTX for NVIDIA GPUs.
+- This build is sufficient for “C/C++/LLVM IR → PTX” workflows. Producing runnable cubins and running kernels typically requires NVIDIA driver/toolkit.
+
+To confirm your configure settings later:
+
+```bash
+grep -E '^(CMAKE_BUILD_TYPE:|LLVM_ENABLE_PROJECTS:|LLVM_TARGETS_TO_BUILD:|LLVM_ENABLE_ASSERTIONS:|LLVM_ENABLE_RTTI:|LLVM_ENABLE_EH:)' \
+  ~/build/llvm-nvptx-wsl2/CMakeCache.txt
+```
+
 ## 3) Build the minimum tools you need
 
 In WSL2, it’s common to reduce parallelism to avoid memory spikes.
@@ -114,6 +156,20 @@ Some AMDGPU tests also require helper tools such as `llvm-readobj`:
 
 ```bash
 ninja -C ~/build/llvm-amdgpu-wsl2 -j 8 llvm-readobj
+
+For NVIDIA/NVPTX, build the minimum tools you need for the PTX workflows:
+
+```bash
+ninja -C ~/build/llvm-nvptx-wsl2 -j 8 \
+  clang clang++ llc llvm-readobj
+```
+
+If you want to run `llvm-lit` in that build tree too, you may also want:
+
+```bash
+ninja -C ~/build/llvm-nvptx-wsl2 -j 8 \
+  FileCheck not count
+```
 ```
 
 Important note about `llvm-lit`:

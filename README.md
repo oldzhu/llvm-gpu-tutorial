@@ -1,10 +1,15 @@
-# LLVM+AMDGPU “full-stack via artifacts” in WSL2 (Ubuntu 24.04)
+# LLVM GPU tutorials (multi-target)
 
-This tutorial documents a practical WSL2 setup to *build and debug the LLVM AMDGPU backend* end-to-end **up to codegen artifacts** (LLVM IR → MIR → AMDGPU asm) and run **lit/FileCheck** tests.
+This repo documents practical WSL2 workflows to *build and debug LLVM GPU backends* end-to-end **up to codegen artifacts** (IR → asm/object) and run **lit/FileCheck** tests.
 
-> WSL2 limitation: you generally **cannot** run ROCm kernels/profilers unless your GPU/driver stack supports it. This tutorial focuses on what you *can* do immediately: compiler/codegen + regression tests.
+> WSL2 limitation: you generally cannot run GPU kernels/profilers. This repo focuses on what you can do immediately: compiler/codegen + regression tests.
 
-## What you get
+## Targets
+
+- AMDGPU: see `amdgpu/` (gfx1151-focused examples)
+- NVIDIA: see `nvidia/` (NVPTX/PTX-focused examples)
+
+## What you get (AMDGPU build)
 - A local out-of-tree LLVM build with:
   - Targets: `AMDGPU;X86`
   - Projects: `clang;mlir`
@@ -14,7 +19,7 @@ This tutorial documents a practical WSL2 setup to *build and debug the LLVM AMDG
 
 ## Extra walkthroughs
 
-- End-to-end compilation flow (frontend → MLIR/LLVM → AMDGPU ISA): `frontend-to-amdgpu.md`
+- AMDGPU end-to-end compilation flow: `amdgpu/frontend-to-amdgpu.md`
 
 ## Versions (this machine)
 - OS: Ubuntu 24.04.3 LTS (WSL2)

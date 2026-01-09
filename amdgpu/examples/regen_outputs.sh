@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BIN="/home/oldzhu/build/llvm-amdgpu-wsl2/bin"
-EX="/home/oldzhu/build/llvm-amdgpu-wsl2/tutorial/examples"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+
+BIN_DEFAULT="/home/oldzhu/build/llvm-amdgpu-wsl2/bin"
+BIN="${LLVM_AMDGPU_BIN:-$BIN_DEFAULT}"
+
+EX="$SCRIPT_DIR"
 OUT="$EX/outputs"
 
 mkdir -p "$OUT"

@@ -1,8 +1,11 @@
-# Generated outputs (reproducible via tutorial/examples/regen_outputs.sh)
-examples/outputs/
+# Generated outputs (reproducible via amdgpu/examples/regen_outputs.sh)
+amdgpu/examples/outputs/
 
 # Common editor/OS cruft
 .DS_Store
 *.swp
 *.swo
 .vscode/
+
+# NVIDIA generated outputs
+nvidia/examples/outputs/

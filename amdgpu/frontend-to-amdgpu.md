@@ -24,7 +24,7 @@ In this repo, you’ll mainly practice in MLIR and LLVM; Triton itself is not in
 All commands below assume:
 
 - `BIN=/home/oldzhu/build/llvm-amdgpu-wsl2/bin`
-- Examples live in `/home/oldzhu/build/llvm-amdgpu-wsl2/tutorial/examples/`
+- Examples live under `amdgpu/examples/`
 
 Key tools:
 
@@ -35,30 +35,30 @@ Key tools:
 
 ## One-command: regenerate all example outputs
 
-From `/home/oldzhu/build/llvm-amdgpu-wsl2`:
+From the tutorial repo root:
 
 ```bash
-chmod +x tutorial/examples/regen_outputs.sh
-tutorial/examples/regen_outputs.sh
+chmod +x amdgpu/examples/regen_outputs.sh
+amdgpu/examples/regen_outputs.sh
 ```
 
 This writes:
 
-- `tutorial/examples/outputs/llvm_add_kernel.gfx1151.s`
-- `tutorial/examples/outputs/llvm_add_kernel.gfx1151.o`
-- `tutorial/examples/outputs/llvm_add_kernel.gfx1151.readobj-file-header.txt`
-- `tutorial/examples/outputs/mlir_gpu_ids.rocdl.mlir`
-- `tutorial/examples/outputs/c_vecadd_host.ll`
+- `amdgpu/examples/outputs/llvm_add_kernel.gfx1151.s`
+- `amdgpu/examples/outputs/llvm_add_kernel.gfx1151.o`
+- `amdgpu/examples/outputs/llvm_add_kernel.gfx1151.readobj-file-header.txt`
+- `amdgpu/examples/outputs/mlir_gpu_ids.rocdl.mlir`
+- `amdgpu/examples/outputs/c_vecadd_host.ll`
 
-These files are generated locally (see `tutorial/.gitignore`).
+These files are generated locally (see `.gitignore`).
 
 ## Example A: C → LLVM IR (host-side)
 
 This demonstrates the *front-end* and LLVM IR emission (host triple).
 
-- Source: [tutorial/examples/c_vecadd_host.c](tutorial/examples/c_vecadd_host.c)
+- Source: [amdgpu/examples/c_vecadd_host.c](amdgpu/examples/c_vecadd_host.c)
 - Command:
-  - `"$BIN/clang" -O2 -S -emit-llvm tutorial/examples/c_vecadd_host.c -o - | sed -n '1,40p'`
+  - `"$BIN/clang" -O2 -S -emit-llvm amdgpu/examples/c_vecadd_host.c -o - | sed -n '1,40p'`
 
 Sample output excerpt (first lines):
 
@@ -75,9 +75,9 @@ This is not a GPU kernel yet; it’s just to make the “frontend → LLVM IR”
 
 This is the most direct “LLVM → AMDGPU ISA” path.
 
-- Source: [tutorial/examples/llvm_add_kernel.ll](tutorial/examples/llvm_add_kernel.ll)
+- Source: [amdgpu/examples/llvm_add_kernel.ll](amdgpu/examples/llvm_add_kernel.ll)
 - Build AMDGPU asm:
-  - `"$BIN/llc" -mtriple=amdgcn-amd-amdhsa -mcpu=gfx1151 -O3 tutorial/examples/llvm_add_kernel.ll -o - | sed -n '1,60p'`
+  - `"$BIN/llc" -mtriple=amdgcn-amd-amdhsa -mcpu=gfx1151 -O3 amdgpu/examples/llvm_add_kernel.ll -o - | sed -n '1,60p'`
 
 Sample output excerpt:
 
@@ -103,9 +103,9 @@ Notes:
 
 This shows the “MLIR GPU lowering” portion that’s Triton-adjacent.
 
-- Source: [tutorial/examples/mlir_gpu_ids.mlir](tutorial/examples/mlir_gpu_ids.mlir)
+- Source: [amdgpu/examples/mlir_gpu_ids.mlir](amdgpu/examples/mlir_gpu_ids.mlir)
 - Lower `gpu.thread_id` into ROCDL + LLVM dialect:
-  - `"$BIN/mlir-opt" tutorial/examples/mlir_gpu_ids.mlir -convert-gpu-to-rocdl='chipset=gfx1151' | sed -n '1,80p'`
+  - `"$BIN/mlir-opt" amdgpu/examples/mlir_gpu_ids.mlir -convert-gpu-to-rocdl='chipset=gfx1151' | sed -n '1,80p'`
 
 Sample output excerpt:
 
@@ -130,5 +130,5 @@ Important limitation (WSL2):
 ## Quick next exercises (useful for Triton-adjacent work)
 
 - Change `chipset=` / `-mcpu=` and compare generated code (`gfx1100`, `gfx1151`, etc.).
-- Add more GPU ops in [tutorial/examples/mlir_gpu_ids.mlir](tutorial/examples/mlir_gpu_ids.mlir) (barriers, subgroup ops), then re-run `-convert-gpu-to-rocdl` and inspect ROCDL.
-- Take a failing AMDGPU LLVM CodeGen test and reproduce its `RUN:` line manually with `llc` (the workflow in tutorial/README.md).
+- Add more GPU ops in [amdgpu/examples/mlir_gpu_ids.mlir](amdgpu/examples/mlir_gpu_ids.mlir) (barriers, subgroup ops), then re-run `-convert-gpu-to-rocdl` and inspect ROCDL.
+- Take a failing AMDGPU LLVM CodeGen test and reproduce its `RUN:` line manually with `llc` (the workflow in README.md).

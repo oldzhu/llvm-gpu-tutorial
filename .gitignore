@@ -1,0 +1,8 @@
+# Generated outputs (reproducible via tutorial/examples/regen_outputs.sh)
+examples/outputs/
+
+# Common editor/OS cruft
+.DS_Store
+*.swp
+*.swo
+.vscode/

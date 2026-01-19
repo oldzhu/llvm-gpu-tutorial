@@ -9,6 +9,10 @@ This repo documents practical WSL2 workflows to *build and debug LLVM GPU backen
 - AMDGPU: see `amdgpu/` (gfx1151-focused examples)
 - NVIDIA: see `nvidia/` (NVPTX/PTX-focused examples)
 
+## Build matrix
+
+- See `BUILD_MATRIX.md` for which out-of-tree build dir to use per target.
+
 ## What you get (AMDGPU build)
 - A local out-of-tree LLVM build with:
   - Targets: `AMDGPU;X86`

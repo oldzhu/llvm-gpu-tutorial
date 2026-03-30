@@ -1,5 +1,7 @@
 # LLVM GPU tutorials (multi-target)
 
+[中文版本](README.zh-CN.md)
+
 This repo documents practical WSL2 workflows to *build and debug LLVM GPU backends* end-to-end **up to codegen artifacts** (IR → asm/object) and run **lit/FileCheck** tests.
 
 > WSL2 limitation: you generally cannot run GPU kernels/profilers. This repo focuses on what you can do immediately: compiler/codegen + regression tests.
@@ -160,6 +162,7 @@ Some AMDGPU tests also require helper tools such as `llvm-readobj`:
 
 ```bash
 ninja -C ~/build/llvm-amdgpu-wsl2 -j 8 llvm-readobj
+```
 
 For NVIDIA/NVPTX, build the minimum tools you need for the PTX workflows:
 
@@ -175,6 +178,7 @@ ninja -C ~/build/llvm-nvptx-wsl2 -j 8 \
   FileCheck not count
 ```
 ```
+
 
 Important note about `llvm-lit`:
 - `llvm-lit` is typically generated as a **script** at `~/build/llvm-amdgpu-wsl2/bin/llvm-lit`.

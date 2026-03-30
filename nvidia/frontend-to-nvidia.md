@@ -1,5 +1,7 @@
 # C/C++ → LLVM → NVIDIA PTX (NVPTX, compile-only)
 
+[中文版本](frontend-to-nvidia.zh-CN.md)
+
 This note mirrors the AMDGPU flow, but for NVIDIA GPUs using LLVM’s **NVPTX** backend.
 It stays *compile-only* (WSL2-friendly): we generate PTX text, but we don’t run kernels.
 

@@ -1,5 +1,7 @@
 # Build matrix (what to build for each GPU target)
 
+[中文版本](BUILD_MATRIX.zh-CN.md)
+
 This repo is **documentation + examples**.
 You build LLVM out-of-tree in separate build directories (recommended) and point the scripts at the right `bin/`.
 

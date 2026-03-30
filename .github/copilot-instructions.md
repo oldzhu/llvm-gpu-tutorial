@@ -1,5 +1,7 @@
 # Project Guidelines
 
+[中文版本](copilot-instructions.zh-CN.md)
+
 ## Scope
 
 This repository is a multi-target LLVM GPU tutorial repo.

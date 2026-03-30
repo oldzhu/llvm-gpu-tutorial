@@ -1,5 +1,7 @@
 # Frontend → LLVM/MLIR → AMDGPU ISA (WSL2 compile-only)
 
+[中文版本](frontend-to-amdgpu.zh-CN.md)
+
 This note is an end-to-end *compiler pipeline* walkthrough you can run in this workspace.
 It intentionally avoids executing on a GPU (no ROCm runtime in WSL2);
 we focus on *IR shapes, lowering steps, and codegen*.

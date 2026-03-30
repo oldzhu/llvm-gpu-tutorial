@@ -1,5 +1,7 @@
 # Session summary (handoff) — LLVM+AMDGPU practice setup
 
+[中文版本](SESSION_SUMMARY.zh-CN.md)
+
 This file summarizes the chat/work done so far so it can be copied into a new workspace/chat.
 
 ## Goal

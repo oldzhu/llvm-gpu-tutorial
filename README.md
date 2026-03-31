@@ -34,6 +34,7 @@ This repo documents practical WSL2 workflows to *build and debug LLVM GPU backen
 
 - AMDGPU end-to-end compilation flow: `amdgpu/frontend-to-amdgpu.md`
 - NVIDIA end-to-end compilation flow: `nvidia/frontend-to-nvidia.md`
+- AMDGPU starter patch ideas: `amdgpu/next-practice-patches.md`
 
 ## Versions (this machine)
 - OS: Ubuntu 24.04.3 LTS (WSL2)
@@ -176,7 +177,6 @@ If you want to run `llvm-lit` in that build tree too, you may also want:
 ```bash
 ninja -C ~/build/llvm-nvptx-wsl2 -j 8 \
   FileCheck not count
-```
 ```
 
 

@@ -129,8 +129,88 @@ Important limitation (WSL2):
 - The common “full compilation” pipeline in MLIR often continues with GPU host lowering and/or `-gpu-module-to-binary` (HSACO emission), which can require ROCm tooling/device libraries.
 - In WSL2, treat this step as “verify the lowering and IR shapes”, and use Example B for “LLVM → ISA”.
 
+## Example D: Real `llc` / MIR debug loop on an upstream AMDGPU test
+
+This is the practical backend-debug loop you will use often when working on LLVM AMDGPU.
+
+- Test file: `~/llvm-project/llvm/test/CodeGen/AMDGPU/directive-amdgcn-target.ll`
+- Goal: inspect one concrete gfx1151 case manually, even if the full lit test currently fails for some other subtarget.
+
+### 1) Generate gfx1151 assembly directly
+
+```bash
+BIN=/home/oldzhu/build/llvm-amdgpu-wsl2/bin
+TEST=~/llvm-project/llvm/test/CodeGen/AMDGPU/directive-amdgcn-target.ll
+
+"$BIN/llc" -mtriple=amdgcn-amd-amdhsa -mcpu=gfx1151 -O3 < "$TEST" | sed -n '1,40p'
+```
+
+Observed output excerpt on this machine:
+
+```asm
+  .amdgcn_target "amdgcn-amd-amdhsa--gfx1151"
+  .amdhsa_code_object_version 6
+  .text
+  .globl	directive_amdgcn_target
+directive_amdgcn_target:
+  s_endpgm
+  .section	.rodata,"a",@progbits
+  .amdhsa_kernel directive_amdgcn_target
+```
+
+Why this is useful:
+
+- It isolates the exact `-mcpu` case you care about.
+- It confirms the backend is selecting the expected target string and HSA metadata for gfx1151.
+
+### 2) Stop at a MIR checkpoint
+
+```bash
+"$BIN/llc" -mtriple=amdgcn-amd-amdhsa -mcpu=gfx1151 -O3 \
+  -stop-after=finalize-isel -verify-machineinstrs < "$TEST" | sed -n '1,120p'
+```
+
+Observed MIR excerpt on this machine:
+
+```yaml
+name:            directive_amdgcn_target
+failedISel:      false
+tracksRegLiveness: true
+registers:
+  - { id: 0, class: vgpr_32, preferred-register: '', flags: [  ] }
+  - { id: 1, class: sgpr_64, preferred-register: '', flags: [  ] }
+  - { id: 2, class: sgpr_64, preferred-register: '', flags: [  ] }
+```
+
+Why this is useful:
+
+- `failedISel: false` tells you instruction selection succeeded.
+- The MIR dump gives you the right starting point for pass-by-pass backend debugging.
+- `-verify-machineinstrs` catches many backend invariants early.
+
+### 3) Why `llvm-lit` may still fail even when your gfx1151 case looks fine
+
+On this machine, the full lit test currently fails because the file also checks a later subtarget that this build does not recognize:
+
+```text
+'gfx1170' is not a recognized processor for this target (ignoring processor)
+error: GFX1170: expected string not found in input
+```
+
+That means:
+
+- your manual gfx1151 debug loop is still valid,
+- but the full test file is no longer a clean baseline PASS in this specific build.
+
+When that happens, prefer one of these:
+
+- run the exact `llc` command for the subtarget you care about,
+- switch to a smaller test that still passes cleanly in your build,
+- or treat the failing lit test itself as a useful investigation target.
+
 ## Quick next exercises (useful for Triton-adjacent work)
 
 - Change `chipset=` / `-mcpu=` and compare generated code (`gfx1100`, `gfx1151`, etc.).
 - Add more GPU ops in [amdgpu/examples/mlir_gpu_ids.mlir](amdgpu/examples/mlir_gpu_ids.mlir) (barriers, subgroup ops), then re-run `-convert-gpu-to-rocdl` and inspect ROCDL.
 - Take a failing AMDGPU LLVM CodeGen test and reproduce its `RUN:` line manually with `llc` (the workflow in README.md).
+- See `amdgpu/next-practice-patches.md` for small, practical starter patch ideas.

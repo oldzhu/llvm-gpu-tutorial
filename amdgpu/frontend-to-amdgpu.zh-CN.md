@@ -129,8 +129,88 @@ module {
 - 在 MLIR 中，常见的“完整编译”流程还会继续做 GPU host lowering，或者使用 `-gpu-module-to-binary` 生成 HSACO；这些步骤可能需要 ROCm 工具链和 device library。
 - 因此在 WSL2 中，更适合把这一步当作“验证 lowering 是否正确、IR 形态是否符合预期”，而真正的“LLVM → ISA”则优先用示例 B。
 
+## 示例 D：在上游 AMDGPU 测试上做真实的 `llc` / MIR 调试循环
+
+这就是你在做 LLVM AMDGPU 后端工作时最常用的实际调试循环。
+
+- 测试文件：`~/llvm-project/llvm/test/CodeGen/AMDGPU/directive-amdgcn-target.ll`
+- 目标：即使完整 lit 测试会因为别的子目标失败，也先手工检查一个明确的 gfx1151 case。
+
+### 1）直接生成 gfx1151 汇编
+
+```bash
+BIN=/home/oldzhu/build/llvm-amdgpu-wsl2/bin
+TEST=~/llvm-project/llvm/test/CodeGen/AMDGPU/directive-amdgcn-target.ll
+
+"$BIN/llc" -mtriple=amdgcn-amd-amdhsa -mcpu=gfx1151 -O3 < "$TEST" | sed -n '1,40p'
+```
+
+当前机器上观察到的输出片段：
+
+```asm
+  .amdgcn_target "amdgcn-amd-amdhsa--gfx1151"
+  .amdhsa_code_object_version 6
+  .text
+  .globl	directive_amdgcn_target
+directive_amdgcn_target:
+  s_endpgm
+  .section	.rodata,"a",@progbits
+  .amdhsa_kernel directive_amdgcn_target
+```
+
+这一步的价值：
+
+- 它把你真正关心的 `-mcpu` case 单独拎出来。
+- 它能确认后端是否真的为 gfx1151 发出了正确的 target string 和 HSA 元数据。
+
+### 2）停在一个 MIR 检查点
+
+```bash
+"$BIN/llc" -mtriple=amdgcn-amd-amdhsa -mcpu=gfx1151 -O3 \
+  -stop-after=finalize-isel -verify-machineinstrs < "$TEST" | sed -n '1,120p'
+```
+
+当前机器上观察到的 MIR 片段：
+
+```yaml
+name:            directive_amdgcn_target
+failedISel:      false
+tracksRegLiveness: true
+registers:
+  - { id: 0, class: vgpr_32, preferred-register: '', flags: [  ] }
+  - { id: 1, class: sgpr_64, preferred-register: '', flags: [  ] }
+  - { id: 2, class: sgpr_64, preferred-register: '', flags: [  ] }
+```
+
+这一步的价值：
+
+- `failedISel: false` 能直接说明 instruction selection 已经成功。
+- MIR dump 是做 pass-by-pass 后端调试的合适起点。
+- `-verify-machineinstrs` 可以尽早暴露很多后端不变量问题。
+
+### 3）为什么 `llvm-lit` 仍然可能失败，即使你的 gfx1151 case 看起来没问题
+
+在当前机器上，这个完整 lit 测试会失败，因为该文件还检查了一个当前构建并不识别的后续子目标：
+
+```text
+'gfx1170' is not a recognized processor for this target (ignoring processor)
+error: GFX1170: expected string not found in input
+```
+
+这意味着：
+
+- 你的 gfx1151 手工调试循环仍然是有效的；
+- 只是这个完整测试文件在当前构建里已经不再是一个干净的 PASS 基线。
+
+遇到这种情况时，优先这样做：
+
+- 直接运行你关心的那个子目标对应的 `llc` 命令；
+- 换成当前构建中仍然能稳定通过的更小测试；
+- 或者把这个 lit 失败本身当成一个值得继续调查的问题。
+
 ## 下一步练习（适合 Triton 邻近方向）
 
 - 修改 `chipset=` / `-mcpu=`，比较不同目标（如 `gfx1100`、`gfx1151`）的生成代码差异。
 - 在 [amdgpu/examples/mlir_gpu_ids.mlir](amdgpu/examples/mlir_gpu_ids.mlir) 中加入更多 GPU op（barrier、subgroup op 等），然后重新运行 `-convert-gpu-to-rocdl` 检查 ROCDL 输出。
 - 挑一个失败的 AMDGPU LLVM CodeGen 测试，用 `llc` 手工复现它的 `RUN:` 行（配合 README 中的工作流）。
+- 参见 `amdgpu/next-practice-patches.md`，里面列了适合入门的实战 patch 方向。

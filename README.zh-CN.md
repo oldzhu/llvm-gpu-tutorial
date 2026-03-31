@@ -36,6 +36,7 @@
 
 - AMDGPU 端到端编译流程：`amdgpu/frontend-to-amdgpu.md`
 - NVIDIA 端到端编译流程：`nvidia/frontend-to-nvidia.md`
+- AMDGPU 入门 patch 思路：`amdgpu/next-practice-patches.md`
 
 ## 当前机器版本
 

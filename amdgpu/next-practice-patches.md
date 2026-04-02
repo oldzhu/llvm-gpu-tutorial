@@ -4,7 +4,7 @@
 
 This file lists small, practical LLVM/AMDGPU practice tasks that fit the current WSL2 compile-only setup.
 
-## 1. Investigate the `directive-amdgcn-target.ll` lit failure
+## 1. Investigate the `directive-amdgcn-target.ll` source/build mismatch
 
 Current observation in this build:
 
@@ -12,6 +12,12 @@ Current observation in this build:
 'gfx1170' is not a recognized processor for this target (ignoring processor)
 error: GFX1170: expected string not found in input
 ```
+
+What we know so far:
+
+- the checked-out source tree contains `gfx1170`,
+- but the current built `llc` binary and generated AMDGPU build files do not,
+- so the likely issue is stale generated backend artifacts or a source/build mismatch.
 
 Why it is a good starter task:
 
@@ -26,9 +32,9 @@ Useful places to inspect in `llvm-project`:
 
 Possible outcomes:
 
-- confirm the test expects a newer GPU than this build supports,
-- identify whether your checkout is missing target-name support,
-- or propose a test adjustment if the expectation and backend no longer match.
+- confirm exactly which generated AMDGPU files are stale,
+- find the smallest rebuild path that refreshes them correctly,
+- or identify why the build graph is not regenerating AMDGPU outputs from newer source files.
 
 ## 2. Add or tighten a small AMDGPU CodeGen test
 
@@ -92,5 +98,6 @@ Good starter work:
 ## Recommended order
 
 1. Reproduce the current `directive-amdgcn-target.ll` failure manually.
-2. Decide whether it is a test issue, a target-support issue, or just a build-version mismatch.
-3. In parallel, make one tiny tests-first improvement in `llvm/test/CodeGen/AMDGPU/`.
+2. Verify the source/build mismatch (`gfx1170` in source, absent in built `llc`).
+3. Find the smallest reliable rebuild path that refreshes AMDGPU generated files.
+4. In parallel, make one tiny tests-first improvement in `llvm/test/CodeGen/AMDGPU/`.

@@ -4,7 +4,7 @@
 
 这个文件列出了一些适合当前 WSL2 “仅编译”环境的小型 LLVM / AMDGPU 练习任务。
 
-## 1. 调查 `directive-amdgcn-target.ll` 的 lit 失败
+## 1. 调查 `directive-amdgcn-target.ll` 的源码 / 构建不一致问题
 
 当前这个构建中观察到的现象：
 
@@ -12,6 +12,12 @@
 'gfx1170' is not a recognized processor for this target (ignoring processor)
 error: GFX1170: expected string not found in input
 ```
+
+目前已经知道的情况：
+
+- 当前 checkout 的源码树里已经有 `gfx1170`，
+- 但当前构建出来的 `llc` 二进制以及 AMDGPU 生成文件里没有它，
+- 因此更可能是 AMDGPU 生成产物陈旧，或者源码 / 构建产物不一致。
 
 为什么它适合作为入门任务：
 
@@ -26,9 +32,9 @@ error: GFX1170: expected string not found in input
 
 可能的结论：
 
-- 确认测试在期待一个当前构建尚不支持的新 GPU，
-- 找到当前 checkout 是否缺少某个 target-name 支持，
-- 或者判断应当调整测试期望，因为测试与后端实现已经不再一致。
+- 确认到底是哪些 AMDGPU 生成文件已经过期，
+- 找到能正确刷新这些文件的最小重建路径，
+- 或者定位为什么当前构建图没有根据更新后的源码重新生成 AMDGPU 输出。
 
 ## 2. 增加或收紧一个小型 AMDGPU CodeGen 测试
 
@@ -92,5 +98,6 @@ llc -mtriple=amdgcn-amd-amdhsa -mcpu=gfx1151 ...
 ## 建议顺序
 
 1. 先手工复现当前 `directive-amdgcn-target.ll` 的失败。
-2. 判断它是测试问题、目标支持问题，还是单纯的构建版本不匹配。
-3. 并行做一个 `llvm/test/CodeGen/AMDGPU/` 下的小型 tests-first 改进。
+2. 验证源码 / 构建不一致（源码里有 `gfx1170`，但已构建的 `llc` 里没有）。
+3. 找到能可靠刷新 AMDGPU 生成文件的最小重建路径。
+4. 并行做一个 `llvm/test/CodeGen/AMDGPU/` 下的小型 tests-first 改进。

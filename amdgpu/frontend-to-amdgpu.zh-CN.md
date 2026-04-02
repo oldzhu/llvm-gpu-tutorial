@@ -190,7 +190,7 @@ registers:
 
 ### 3）为什么 `llvm-lit` 仍然可能失败，即使你的 gfx1151 case 看起来没问题
 
-在当前机器上，这个完整 lit 测试会失败，因为该文件还检查了一个当前构建并不识别的后续子目标：
+在当前机器上，这个完整 lit 测试会失败，因为当前构建出来的 `llc` 二进制并不识别一个源码树其实已经知道的后续子目标：
 
 ```text
 'gfx1170' is not a recognized processor for this target (ignoring processor)
@@ -201,6 +201,12 @@ error: GFX1170: expected string not found in input
 
 - 你的 gfx1151 手工调试循环仍然是有效的；
 - 只是这个完整测试文件在当前构建里已经不再是一个干净的 PASS 基线。
+
+这次调查还得到一个更重要的结论：
+
+- `gfx1170` 已经存在于当前 checkout 的源码树中，例如 `llvm/include/llvm/TargetParser/AMDGPUTargetParser.def` 以及相关 AMDGPU 后端文件里。
+- 但 `~/build/llvm-amdgpu-wsl2/` 里的 AMDGPU 生成文件仍然更旧，其中并没有 `gfx1170`。
+- 因此当前更像是源码 / 构建产物不一致，或者 AMDGPU 生成文件处于陈旧状态，而不是“LLVM 根本不支持 gfx1170”。
 
 遇到这种情况时，优先这样做：
 

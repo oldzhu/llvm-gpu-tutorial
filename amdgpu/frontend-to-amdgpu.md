@@ -190,7 +190,7 @@ Why this is useful:
 
 ### 3) Why `llvm-lit` may still fail even when your gfx1151 case looks fine
 
-On this machine, the full lit test currently fails because the file also checks a later subtarget that this build does not recognize:
+On this machine, the full lit test currently fails because the built `llc` binary does not recognize a later subtarget that the source tree already knows about:
 
 ```text
 'gfx1170' is not a recognized processor for this target (ignoring processor)
@@ -201,6 +201,12 @@ That means:
 
 - your manual gfx1151 debug loop is still valid,
 - but the full test file is no longer a clean baseline PASS in this specific build.
+
+Important follow-up from the investigation:
+
+- `gfx1170` is present in the checked-out source tree under `llvm/include/llvm/TargetParser/AMDGPUTargetParser.def` and related AMDGPU backend files.
+- the generated AMDGPU build artifacts in `~/build/llvm-amdgpu-wsl2/` are older and do not contain `gfx1170`.
+- so this currently looks like a source/build mismatch or stale generated backend state, not simply “LLVM does not support gfx1170”.
 
 When that happens, prefer one of these:
 

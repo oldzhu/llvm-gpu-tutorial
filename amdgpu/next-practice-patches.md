@@ -17,7 +17,17 @@ Passed: 1 (100.00%)
 
 Key lesson: when `llc -march=amdgcn -mcpu=help` is missing a target present in source, suspect stale generated files and do a full rebuild.
 
-## 2. Add or tighten a small AMDGPU CodeGen test
+## 2. ~~Add or tighten a small AMDGPU CodeGen test~~ (FIRST PATCH DONE)
+
+Added one gfx1151 RUN line to `rotr.ll` in `llvm-project`:
+
+- `llvm/test/CodeGen/AMDGPU/rotr.ll`: +1 line
+- gfx1151 function body codegen is identical to gfx1100 with `+real-true16` on this test, so it shares the existing `GFX11,GFX11-TRUE16` check prefix.
+- Verified via `llvm-lit` on this build: **PASS**.
+
+Next time, pick a test where gfx1151 codegen actually differs from gfx1100 and requires a new `GFX1151` check prefix.
+
+### Original task description:
 
 Pick a tiny existing test under `llvm/test/CodeGen/AMDGPU/` and improve it by:
 
@@ -78,7 +88,7 @@ Good starter work:
 
 ## Recommended order
 
-1. ~~Reproduce the current `directive-amdgcn-target.ll` failure manually.~~ (done)
-2. ~~Verify the source/build mismatch (`gfx1170` in source, absent in built `llc`).~~ (done)
-3. ~~Find the smallest reliable rebuild path that refreshes AMDGPU generated files.~~ (done: ran `cmake` reconfigure + `ninja llc`)
-4. Make one tiny tests-first improvement in `llvm/test/CodeGen/AMDGPU/`. (next)
+1. ~~Investigate `directive-amdgcn-target.ll` lit failure~~ (done: stale-build, resolved)
+2. ~~Add a gfx1151 check to a small AMDGPU test~~ (done: rotr.ll, PASS)
+3. Find a test where gfx1151 codegen differs from gfx1100 and add a real `GFX1151` check prefix.
+4. In parallel, extend the tutorial with one more MIR-focused example.

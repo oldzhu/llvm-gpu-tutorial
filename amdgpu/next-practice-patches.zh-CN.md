@@ -17,7 +17,17 @@ Passed: 1 (100.00%)
 
 核心经验：当 `llc -march=amdgcn -mcpu=help` 列表中缺失了你在源码里已经看到的某个 target 时，优先怀疑是生成文件过期，做一个完整重建。
 
-## 2. 增加或收紧一个小型 AMDGPU CodeGen 测试
+## 2. ~~增加或收紧一个小型 AMDGPU CodeGen 测试~~（首个 patch 已完成）
+
+在 `llvm-project` 的 `rotr.ll` 中增加了一行 gfx1151 RUN：
+
+- `llvm/test/CodeGen/AMDGPU/rotr.ll`：增加一行
+- 在这个测试中，gfx1151 的函数体代码生成结果与 gfx1100 `+real-true16` 完全一致，所以可以直接复用现有的 `GFX11,GFX11-TRUE16` 检查前缀。
+- 已通过 `llvm-lit` 验证：**PASS**。
+
+下一步可以挑一个 gfx1151 与 gfx1100 代码生成确实不同的测试，再添加独立的 `GFX1151` 检查前缀。
+
+### 原任务描述：
 
 从 `llvm/test/CodeGen/AMDGPU/` 里挑一个很小的现有测试，然后做下面其中一种改进：
 
@@ -81,4 +91,6 @@ llc -mtriple=amdgcn-amd-amdhsa -mcpu=gfx1151 ...
 1. ~~先手工复现当前 `directive-amdgcn-target.ll` 的失败。~~（已完成）
 2. ~~验证源码 / 构建不一致（源码里有 `gfx1170`，但已构建的 `llc` 里没有）。~~（已完成）
 3. ~~找到能可靠刷新 AMDGPU 生成文件的最小重建路径。~~（已完成：执行 `cmake` 重新配置 + `ninja llc`）
-4. 做一个 `llvm/test/CodeGen/AMDGPU/` 下的小型 tests-first 改进。（下一步）
+4. ~~做一个 `llvm/test/CodeGen/AMDGPU/` 下的小型 tests-first 改进。~~（已完成：rotr.ll，PASS）
+5. 找一个 gfx1151 与 gfx1100 代码生成确实不同的测试，添加真正的 `GFX1151` 检查前缀。
+6. 同时，用另一个更偏 MIR 的示例来扩展教程。

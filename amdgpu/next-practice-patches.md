@@ -78,11 +78,7 @@ Good starter work:
 
 ## Recommended order
 
-1. Reproduce the current `directive-amdgcn-target.ll` failure manually.
-2. Verify the source/build mismatch (`gfx1170` in source, absent in built `llc`).
-3. Find the smallest reliable rebuild path that refreshes AMDGPU generated files.
-4. In parallel, make one tiny tests-first improvement in `llvm/test/CodeGen/AMDGPU/`.
-~~Reproduce the current `directive-amdgcn-target.ll` failure manually.~~ (done)
+1. ~~Reproduce the current `directive-amdgcn-target.ll` failure manually.~~ (done)
 2. ~~Verify the source/build mismatch (`gfx1170` in source, absent in built `llc`).~~ (done)
 3. ~~Find the smallest reliable rebuild path that refreshes AMDGPU generated files.~~ (done: ran `cmake` reconfigure + `ninja llc`)
 4. Make one tiny tests-first improvement in `llvm/test/CodeGen/AMDGPU/`. (next)

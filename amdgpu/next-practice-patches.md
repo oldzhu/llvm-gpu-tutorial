@@ -4,37 +4,18 @@
 
 This file lists small, practical LLVM/AMDGPU practice tasks that fit the current WSL2 compile-only setup.
 
-## 1. Investigate the `directive-amdgcn-target.ll` source/build mismatch
+## 1. ~~Investigate the `directive-amdgcn-target.ll` source/build mismatch~~ (RESOLVED)
 
-Current observation in this build:
+~~Current observation in this build:~~ (resolved after full rebuild)
+
+The `gfx1170` issue was a stale-build problem, not a backend support gap. After a full `cmake` reconfigure + `ninja llc` rebuild, `directive-amdgcn-target.ll` now passes cleanly:
 
 ```text
-'gfx1170' is not a recognized processor for this target (ignoring processor)
-error: GFX1170: expected string not found in input
+PASS: LLVM :: CodeGen/AMDGPU/directive-amdgcn-target.ll
+Passed: 1 (100.00%)
 ```
 
-What we know so far:
-
-- the checked-out source tree contains `gfx1170`,
-- but the current built `llc` binary and generated AMDGPU build files do not,
-- so the likely issue is stale generated backend artifacts or a source/build mismatch.
-
-Why it is a good starter task:
-
-- It is narrow and reproducible.
-- It teaches you how subtarget names are recognized by the AMDGPU backend.
-- It gives you practice reading test expectations versus actual backend support.
-
-Useful places to inspect in `llvm-project`:
-
-- `llvm/lib/Target/AMDGPU/`
-- `llvm/test/CodeGen/AMDGPU/directive-amdgcn-target.ll`
-
-Possible outcomes:
-
-- confirm exactly which generated AMDGPU files are stale,
-- find the smallest rebuild path that refreshes them correctly,
-- or identify why the build graph is not regenerating AMDGPU outputs from newer source files.
+Key lesson: when `llc -march=amdgcn -mcpu=help` is missing a target present in source, suspect stale generated files and do a full rebuild.
 
 ## 2. Add or tighten a small AMDGPU CodeGen test
 
@@ -101,3 +82,7 @@ Good starter work:
 2. Verify the source/build mismatch (`gfx1170` in source, absent in built `llc`).
 3. Find the smallest reliable rebuild path that refreshes AMDGPU generated files.
 4. In parallel, make one tiny tests-first improvement in `llvm/test/CodeGen/AMDGPU/`.
+~~Reproduce the current `directive-amdgcn-target.ll` failure manually.~~ (done)
+2. ~~Verify the source/build mismatch (`gfx1170` in source, absent in built `llc`).~~ (done)
+3. ~~Find the smallest reliable rebuild path that refreshes AMDGPU generated files.~~ (done: ran `cmake` reconfigure + `ninja llc`)
+4. Make one tiny tests-first improvement in `llvm/test/CodeGen/AMDGPU/`. (next)

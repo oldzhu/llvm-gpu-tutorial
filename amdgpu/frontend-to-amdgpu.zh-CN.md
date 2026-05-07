@@ -190,29 +190,28 @@ registers:
 
 ### 3）为什么 `llvm-lit` 仍然可能失败，即使你的 gfx1151 case 看起来没问题
 
-在当前机器上，这个完整 lit 测试会失败，因为当前构建出来的 `llc` 二进制并不识别一个源码树其实已经知道的后续子目标：
+在当前机器上，这个完整 lit 测试最初失败，因为当前构建出来的 `llc` 二进制并不识别一个源码树其实已经知道的后续子目标：
 
 ```text
 'gfx1170' is not a recognized processor for this target (ignoring processor)
 error: GFX1170: expected string not found in input
 ```
 
-这意味着：
+**这个问题是如何解决的：**
 
-- 你的 gfx1151 手工调试循环仍然是有效的；
-- 只是这个完整测试文件在当前构建里已经不再是一个干净的 PASS 基线。
+- `gfx1170` 已经存在于当前 checkout 的源码树中（例如 `llvm/include/llvm/TargetParser/AMDGPUTargetParser.def`）。
+- 但 `~/build/llvm-amdgpu-wsl2/` 里的 AMDGPU 生成文件（如 `AMDGPUGenSubtargetInfo.inc`）更旧，其中并没有 `gfx1170`。
+- 经过 `cmake` 重新配置后再完整重建 `llc`（`ninja -C ~/build/llvm-amdgpu-wsl2 llc`），生成文件得以刷新。
+- 重建后，`directive-amdgcn-target.ll` 现在可以干净通过：
+  ```text
+  PASS: LLVM :: CodeGen/AMDGPU/directive-amdgcn-target.ll (1 of 1)
+  ```
 
-这次调查还得到一个更重要的结论：
+经验总结：
 
-- `gfx1170` 已经存在于当前 checkout 的源码树中，例如 `llvm/include/llvm/TargetParser/AMDGPUTargetParser.def` 以及相关 AMDGPU 后端文件里。
-- 但 `~/build/llvm-amdgpu-wsl2/` 里的 AMDGPU 生成文件仍然更旧，其中并没有 `gfx1170`。
-- 因此当前更像是源码 / 构建产物不一致，或者 AMDGPU 生成文件处于陈旧状态，而不是“LLVM 根本不支持 gfx1170”。
-
-遇到这种情况时，优先这样做：
-
-- 直接运行你关心的那个子目标对应的 `llc` 命令；
-- 换成当前构建中仍然能稳定通过的更小测试；
-- 或者把这个 lit 失败本身当成一个值得继续调查的问题。
+- 你的 gfx1151 手工调试循环从头到尾都是正确的；
+- 当 `-mcpu=help` 列表中缺失了你在源码里已经看到的某个 target 时，优先怀疑是生成文件过期；
+- 通常一次完整重建就能修复，而不需要改动代码。
 
 ## 下一步练习（适合 Triton 邻近方向）
 

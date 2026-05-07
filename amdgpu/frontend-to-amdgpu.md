@@ -190,29 +190,28 @@ Why this is useful:
 
 ### 3) Why `llvm-lit` may still fail even when your gfx1151 case looks fine
 
-On this machine, the full lit test currently fails because the built `llc` binary does not recognize a later subtarget that the source tree already knows about:
+On this machine, the full lit test initially failed because the built `llc` binary did not recognize a later subtarget that the source tree already knew about:
 
 ```text
 'gfx1170' is not a recognized processor for this target (ignoring processor)
 error: GFX1170: expected string not found in input
 ```
 
-That means:
+**How this was resolved:**
 
-- your manual gfx1151 debug loop is still valid,
-- but the full test file is no longer a clean baseline PASS in this specific build.
+- `gfx1170` is present in the checked-out source tree (`llvm/include/llvm/TargetParser/AMDGPUTargetParser.def`).
+- The generated AMDGPU build artifacts (e.g. `AMDGPUGenSubtargetInfo.inc`) were stale/older and did not include `gfx1170`.
+- A full rebuild (`ninja -C ~/build/llvm-amdgpu-wsl2 llc` after a fresh `cmake` reconfigure) refreshed the generated files.
+- After that rebuild, `directive-amdgcn-target.ll` now passes cleanly:
+  ```text
+  PASS: LLVM :: CodeGen/AMDGPU/directive-amdgcn-target.ll (1 of 1)
+  ```
 
-Important follow-up from the investigation:
+Takeaways:
 
-- `gfx1170` is present in the checked-out source tree under `llvm/include/llvm/TargetParser/AMDGPUTargetParser.def` and related AMDGPU backend files.
-- the generated AMDGPU build artifacts in `~/build/llvm-amdgpu-wsl2/` are older and do not contain `gfx1170`.
-- so this currently looks like a source/build mismatch or stale generated backend state, not simply “LLVM does not support gfx1170”.
-
-When that happens, prefer one of these:
-
-- run the exact `llc` command for the subtarget you care about,
-- switch to a smaller test that still passes cleanly in your build,
-- or treat the failing lit test itself as a useful investigation target.
+- your manual gfx1151 debug loop was valid all along,
+- always suspect stale generated files when `-mcpu=help` is missing a target you see in source,
+- a full rebuild is often the fix, not a code change.
 
 ## Quick next exercises (useful for Triton-adjacent work)
 

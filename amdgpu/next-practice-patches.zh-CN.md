@@ -4,37 +4,18 @@
 
 这个文件列出了一些适合当前 WSL2 “仅编译”环境的小型 LLVM / AMDGPU 练习任务。
 
-## 1. 调查 `directive-amdgcn-target.ll` 的源码 / 构建不一致问题
+## 1. ~~调查 `directive-amdgcn-target.ll` 的源码 / 构建不一致问题~~（已解决）
 
-当前这个构建中观察到的现象：
+~~在完整重建后，之前观察到的失败已不复存在。~~
+
+`gfx1170` 问题是一个 stale-build 问题，而不是后端支持缺失。在 `cmake` 重新配置并完整重建 `llc` 之后，`directive-amdgcn-target.ll` 现已干净通过：
 
 ```text
-'gfx1170' is not a recognized processor for this target (ignoring processor)
-error: GFX1170: expected string not found in input
+PASS: LLVM :: CodeGen/AMDGPU/directive-amdgcn-target.ll
+Passed: 1 (100.00%)
 ```
 
-目前已经知道的情况：
-
-- 当前 checkout 的源码树里已经有 `gfx1170`，
-- 但当前构建出来的 `llc` 二进制以及 AMDGPU 生成文件里没有它，
-- 因此更可能是 AMDGPU 生成产物陈旧，或者源码 / 构建产物不一致。
-
-为什么它适合作为入门任务：
-
-- 范围小，而且很容易复现。
-- 它能帮助你理解 AMDGPU 后端是如何识别子目标名字的。
-- 你会练到如何对照测试期望与后端的真实支持情况。
-
-在 `llvm-project` 中值得查看的位置：
-
-- `llvm/lib/Target/AMDGPU/`
-- `llvm/test/CodeGen/AMDGPU/directive-amdgcn-target.ll`
-
-可能的结论：
-
-- 确认到底是哪些 AMDGPU 生成文件已经过期，
-- 找到能正确刷新这些文件的最小重建路径，
-- 或者定位为什么当前构建图没有根据更新后的源码重新生成 AMDGPU 输出。
+核心经验：当 `llc -march=amdgcn -mcpu=help` 列表中缺失了你在源码里已经看到的某个 target 时，优先怀疑是生成文件过期，做一个完整重建。
 
 ## 2. 增加或收紧一个小型 AMDGPU CodeGen 测试
 
@@ -97,7 +78,7 @@ llc -mtriple=amdgcn-amd-amdhsa -mcpu=gfx1151 ...
 
 ## 建议顺序
 
-1. 先手工复现当前 `directive-amdgcn-target.ll` 的失败。
-2. 验证源码 / 构建不一致（源码里有 `gfx1170`，但已构建的 `llc` 里没有）。
-3. 找到能可靠刷新 AMDGPU 生成文件的最小重建路径。
-4. 并行做一个 `llvm/test/CodeGen/AMDGPU/` 下的小型 tests-first 改进。
+1. ~~先手工复现当前 `directive-amdgcn-target.ll` 的失败。~~（已完成）
+2. ~~验证源码 / 构建不一致（源码里有 `gfx1170`，但已构建的 `llc` 里没有）。~~（已完成）
+3. ~~找到能可靠刷新 AMDGPU 生成文件的最小重建路径。~~（已完成：执行 `cmake` 重新配置 + `ninja llc`）
+4. 做一个 `llvm/test/CodeGen/AMDGPU/` 下的小型 tests-first 改进。（下一步）
